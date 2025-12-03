@@ -17,7 +17,7 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0", default-features = false, features = ["std"] }
 thiserror = "1.0"
 which = "6.0"
-toml = { version = "0.8", default-features = false, features = ["parse", "display"] }
+toml = { version = "0.9", default-features = false, features = ["parse", "display"] }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 octocrab = { version = "0.47.0", default-features = false, features = ["rustls", "default-client"] }
 zip = { version = "5.0", default-features = false, features = ["deflate"] }
