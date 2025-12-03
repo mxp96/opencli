@@ -2,8 +2,7 @@
 
 Command-line interface (CLI) tool untuk [open.mp](https://open.mp/) Manajemen Server dan Pawn project building dengan sistem package management.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Test](https://github.com/mxp96/opencli/actions/workflows/test.yml/badge.svg)](https://github.com/mxp96/opencli/actions/workflows/test.yml)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 ## Dokumentasi
 

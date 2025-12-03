@@ -2,8 +2,7 @@
 
 Интерфейс командной строки (CLI) для управления сервером [open.mp](https://open.mp/) и сборки Pawn-проектов с системой управления пакетами.
 
-[![Лицензия: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Тесты](https://github.com/mxp96/opencli/actions/workflows/test.yml/badge.svg)](https://github.com/mxp96/opencli/actions/workflows/test.yml)
+[![Лицензия: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 ## Документация
 
