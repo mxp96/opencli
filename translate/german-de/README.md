@@ -3,13 +3,13 @@
 Command-Line-Interface (CLI) Werkzeug für [open.mp](https://open.mp/) Serververwaltung und Pawn-Projektbau mit Paketverwaltungssystem.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Test](https://github.com/mxp96/open-cli/actions/workflows/test.yml/badge.svg)](https://github.com/mxp96/open-cli/actions/workflows/test.yml)
+[![Test](https://github.com/mxp96/opencli/actions/workflows/test.yml/badge.svg)](https://github.com/mxp96/opencli/actions/workflows/test.yml)
 
 ## Dokumentation
 
-- [Wiki Startseite](https://github.com/mxp96/open-cli/wiki)
-- [Paketverwaltung](https://github.com/mxp96/open-cli/wiki)
-- [Compiler-Optionen](https://github.com/mxp96/open-cli/wiki/Compiler-Options)
+- [Wiki Startseite](https://github.com/mxp96/opencli/wiki)
+- [Paketverwaltung](https://github.com/mxp96/opencli/wiki)
+- [Compiler-Optionen](https://github.com/mxp96/opencli/wiki/Compiler-Options)
 - [Docker-Anleitung](docs/DOCKER.md)
 - [Mitwirken](docs/CONTRIBUTING.md)
 
@@ -26,7 +26,7 @@ Command-Line-Interface (CLI) Werkzeug für [open.mp](https://open.mp/) Serverver
 
 ### Von Release
 
-Laden Sie die neueste Binärdatei für Ihre Plattform von [Releases](https://github.com/mxp96/open-cli/releases) herunter.
+Laden Sie die neueste Binärdatei für Ihre Plattform von [Releases](https://github.com/mxp96/opencli/releases) herunter.
 
 **Linux/macOS:**
 ```bash
@@ -41,8 +41,8 @@ Extrahieren Sie die ZIP-Datei und fügen Sie sie zu PATH hinzu.
 ### Aus dem Quellcode
 
 ```bash
-git clone https://github.com/mxp96/open-cli
-cd open-cli
+git clone https://github.com/mxp96/opencli
+cd opencli
 cargo build --release
 ```
 
@@ -51,8 +51,8 @@ Die Binärdatei befindet sich in `target/release/opencli`.
 ### Mit Docker
 
 ```bash
-docker pull ghcr.io/mxp96/open-cli:latest
-docker run --rm -v $(pwd):/workspace ghcr.io/mxp96/open-cli:latest --help
+docker pull ghcr.io/mxp96/opencli:latest
+docker run --rm -v $(pwd):/workspace ghcr.io/mxp96/opencli:latest --help
 ```
 
 ## Schnellstart
@@ -184,7 +184,7 @@ Siehe [CONTRIBUTING.md](docs/CONTRIBUTING.md) für weitere Details.
 
 Danke an alle Mitwirkenden, die dieses Projekt möglich gemacht haben:
 
-[![Contributors](https://contrib.rocks/image?repo=mxp96/open-cli)](https://github.com/mxp96/open-cli/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=mxp96/opencli)](https://github.com/mxp96/opencli/graphs/contributors)
 
 <!-- CONTRIBUTORS-LIST:START -->
 Erstellt mit [contrib.rocks](https://contrib.rocks).

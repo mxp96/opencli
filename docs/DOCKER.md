@@ -14,13 +14,13 @@ Run OpenCLI with Docker:
 
 ```bash
 # Show help
-docker run --rm -v $(pwd):/workspace ghcr.io/mxp96/open-cli:latest --help
+docker run --rm -v $(pwd):/workspace ghcr.io/mxp96/opencli:latest --help
 
 # Setup your project
-docker run --rm -v $(pwd):/workspace ghcr.io/mxp96/open-cli:latest setup
+docker run --rm -v $(pwd):/workspace ghcr.io/mxp96/opencli:latest setup
 
 # Build
-docker run --rm -v $(pwd):/workspace ghcr.io/mxp96/open-cli:latest build
+docker run --rm -v $(pwd):/workspace ghcr.io/mxp96/opencli:latest build
 ```
 
 Or use Docker Compose:
@@ -144,7 +144,7 @@ make docker-clean
 Pull the latest image:
 
 ```bash
-docker pull ghcr.io/mxp96/open-cli:latest
+docker pull ghcr.io/mxp96/opencli:latest
 ```
 
 Run in production:
@@ -154,7 +154,7 @@ docker run -d \
   --name opencli \
   --restart unless-stopped \
   -v /path/to/project:/workspace \
-  ghcr.io/mxp96/open-cli:latest build
+  ghcr.io/mxp96/opencli:latest build
 ```
 
 Check if it's running:

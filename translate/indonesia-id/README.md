@@ -3,13 +3,13 @@
 Command-line interface (CLI) tool untuk [open.mp](https://open.mp/) Manajemen Server dan Pawn project building dengan sistem package management.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Test](https://github.com/mxp96/open-cli/actions/workflows/test.yml/badge.svg)](https://github.com/mxp96/open-cli/actions/workflows/test.yml)
+[![Test](https://github.com/mxp96/opencli/actions/workflows/test.yml/badge.svg)](https://github.com/mxp96/opencli/actions/workflows/test.yml)
 
 ## Dokumentasi
 
-- [Wiki Home](https://github.com/mxp96/open-cli/wiki)
-- [Package Management](https://github.com/mxp96/open-cli/wiki)
-- [Compiler Options](https://github.com/mxp96/open-cli/wiki/Compiler-Options)
+- [Wiki Home](https://github.com/mxp96/opencli/wiki)
+- [Package Management](https://github.com/mxp96/opencli/wiki)
+- [Compiler Options](https://github.com/mxp96/opencli/wiki/Compiler-Options)
 - [Docker Guide](docs/DOCKER.md)
 - [Contributing](docs/CONTRIBUTING.md)
 
@@ -26,7 +26,7 @@ Command-line interface (CLI) tool untuk [open.mp](https://open.mp/) Manajemen Se
 
 ### Dari Release
 
-Download binary terbaru untuk platform Anda dari [Releases](https://github.com/mxp96/open-cli/releases).
+Download binary terbaru untuk platform Anda dari [Releases](https://github.com/mxp96/opencli/releases).
 
 **Linux/macOS:**
 ```bash
@@ -41,8 +41,8 @@ Ekstrak ZIP dan tambahkan ke PATH.
 ### Dari Source
 
 ```bash
-git clone https://github.com/mxp96/open-cli
-cd open-cli
+git clone https://github.com/mxp96/opencli
+cd opencli
 cargo build --release
 ```
 
@@ -51,8 +51,8 @@ Binary akan berada di `target/release/opencli`.
 ### Menggunakan Docker
 
 ```bash
-docker pull ghcr.io/mxp96/open-cli:latest
-docker run --rm -v $(pwd):/workspace ghcr.io/mxp96/open-cli:latest --help
+docker pull ghcr.io/mxp96/opencli:latest
+docker run --rm -v $(pwd):/workspace ghcr.io/mxp96/opencli:latest --help
 ```
 
 ## Mulai Cepat
@@ -184,7 +184,7 @@ Lihat [CONTRIBUTING.md](docs/CONTRIBUTING.md) untuk lebih jelasnya.
 
 Terima kasih kepada semua pihak yang telah berkontribusi sehingga proyek ini bisa terlaksana:
 
-[![Contributors](https://contrib.rocks/image?repo=mxp96/open-cli)](https://github.com/mxp96/open-cli/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=mxp96/opencli)](https://github.com/mxp96/opencli/graphs/contributors)
 
 <!-- CONTRIBUTORS-LIST:START -->
 Dibuat oleh [contrib.rocks](https://contrib.rocks).

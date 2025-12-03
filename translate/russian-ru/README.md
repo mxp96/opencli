@@ -3,13 +3,13 @@
 Интерфейс командной строки (CLI) для управления сервером [open.mp](https://open.mp/) и сборки Pawn-проектов с системой управления пакетами.
 
 [![Лицензия: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Тесты](https://github.com/mxp96/open-cli/actions/workflows/test.yml/badge.svg)](https://github.com/mxp96/open-cli/actions/workflows/test.yml)
+[![Тесты](https://github.com/mxp96/opencli/actions/workflows/test.yml/badge.svg)](https://github.com/mxp96/opencli/actions/workflows/test.yml)
 
 ## Документация
 
-- [Главная Wiki](https://github.com/mxp96/open-cli/wiki)
-- [Управление пакетами](https://github.com/mxp96/open-cli/wiki)
-- [Опции компилятора](https://github.com/mxp96/open-cli/wiki/Compiler-Options)
+- [Главная Wiki](https://github.com/mxp96/opencli/wiki)
+- [Управление пакетами](https://github.com/mxp96/opencli/wiki)
+- [Опции компилятора](https://github.com/mxp96/opencli/wiki/Compiler-Options)
 - [Руководство по Docker](docs/DOCKER.md)
 - [Участие в разработке](docs/CONTRIBUTING.md)
 
@@ -26,7 +26,7 @@
 
 ### Из релизов
 
-Загрузите последнюю версию бинарного файла для вашей платформы из раздела [Релизы](https://github.com/mxp96/open-cli/releases).
+Загрузите последнюю версию бинарного файла для вашей платформы из раздела [Релизы](https://github.com/mxp96/opencli/releases).
 
 **Linux/macOS:**
 ```bash
@@ -41,8 +41,8 @@ opencli --version
 ### Из исходного кода
 
 ```bash
-git clone https://github.com/mxp96/open-cli
-cd open-cli
+git clone https://github.com/mxp96/opencli
+cd opencli
 cargo build --release
 ```
 
@@ -51,8 +51,8 @@ cargo build --release
 ### Использование Docker
 
 ```bash
-docker pull ghcr.io/mxp96/open-cli:latest
-docker run --rm -v $(pwd):/workspace ghcr.io/mxp96/open-cli:latest --help
+docker pull ghcr.io/mxp96/opencli:latest
+docker run --rm -v $(pwd):/workspace ghcr.io/mxp96/opencli:latest --help
 ```
 
 ## Быстрый старт
@@ -184,7 +184,7 @@ docker compose up dev
 
 Благодарим всех, кто внес свой вклад в реализацию этого проекта:
 
-[![Участники](https://contrib.rocks/image?repo=mxp96/open-cli)](https://github.com/mxp96/open-cli/graphs/contributors)
+[![Участники](https://contrib.rocks/image?repo=mxp96/opencli)](https://github.com/mxp96/opencli/graphs/contributors)
 
 <!-- CONTRIBUTORS-LIST:START -->
 Создано с помощью [contrib.rocks](https://contrib.rocks).

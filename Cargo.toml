@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 authors = ["mxp96"]
 description = "CLI tool for open.mp server management"
-license = "MIT"
+license = "GPL-3.0"
 
 [[bin]]
 name = "opencli"
