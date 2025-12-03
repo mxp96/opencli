@@ -8,7 +8,7 @@ Command-line interface (CLI) tool for [open.mp](https://open.mp/) server managem
 
 - [Wiki Home](https://github.com/mxp96/opencli/wiki)
 - [Package Management](https://github.com/mxp96/opencli/wiki)
-- [Compiler Options](https://github.com/mxp96/opencli/wiki/Compiler-Options)
+- [Compiler Options](docs/compiler-options.md)
 - [Docker Guide](docs/DOCKER.md)
 - [Contributing](docs/CONTRIBUTING.md)
 

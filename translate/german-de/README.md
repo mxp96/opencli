@@ -8,9 +8,9 @@ Command-Line-Interface (CLI) Werkzeug für [open.mp](https://open.mp/) Serverver
 
 - [Wiki Startseite](https://github.com/mxp96/opencli/wiki)
 - [Paketverwaltung](https://github.com/mxp96/opencli/wiki)
-- [Compiler-Optionen](https://github.com/mxp96/opencli/wiki/Compiler-Options)
-- [Docker-Anleitung](docs/DOCKER.md)
-- [Mitwirken](docs/CONTRIBUTING.md)
+- [Compiler-Optionen](../../docs/compiler-options.md)
+- [Docker-Anleitung](../../docs/DOCKER.md)
+- [Mitwirken](../../docs/CONTRIBUTING.md)
 
 ## Funktionen
 

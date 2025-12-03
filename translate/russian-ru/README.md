@@ -8,9 +8,9 @@
 
 - [Главная Wiki](https://github.com/mxp96/opencli/wiki)
 - [Управление пакетами](https://github.com/mxp96/opencli/wiki)
-- [Опции компилятора](https://github.com/mxp96/opencli/wiki/Compiler-Options)
-- [Руководство по Docker](docs/DOCKER.md)
-- [Участие в разработке](docs/CONTRIBUTING.md)
+- [Опции компилятора](../../docs/compiler-options.md)
+- [Руководство по Docker](../../docs/DOCKER.md)
+- [Участие в разработке](../../docs/CONTRIBUTING.md)
 
 ## Возможности
 
