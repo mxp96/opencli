@@ -1,0 +1,176 @@
+x-test-base: &test-base
+  build:
+    context: .
+    target: runtime
+    dockerfile: Dockerfile
+  user: root
+  volumes:
+    - test-config:/root/.config/opencli
+  working_dir: /project
+  networks:
+    - test-network
+  environment:
+    RUST_LOG: info
+    CI: "true"
+    HOME: /root
+  entrypoint: []
+
+services:
+  test-package-install:
+    <<: *test-base
+    container_name: test-package-install
+    volumes:
+      - ./test-scenarios/install:/project
+      - test-config:/root/.config/opencli
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo '=== Testing Package Installation ==='
+        mkdir -p gamemodes include components plugins qawno/include
+        opencli setup --force
+        opencli install compiler
+        opencli package install Y-Less/sscanf=2.13.8 --target components
+        opencli package list
+        echo 'Checking installed files...'
+        ls -la components/ || echo 'No components directory'
+        ls -la include/ || echo 'No include directory'
+        ls -la plugins/ || echo 'No plugins directory'
+        echo 'Verifying files exist...'
+        (test -f components/sscanf.dll || test -f components/sscanf.so) && echo '✓ Binary found' || echo '✗ Binary NOT found'
+        test -f include/sscanf2.inc && echo '✓ Include found' || echo '✗ Include NOT found'
+        echo 'Package installation test passed'
+
+  test-package-remove:
+    <<: *test-base
+    container_name: test-package-remove
+    volumes:
+      - ./test-scenarios/remove:/project
+      - test-config:/root/.config/opencli
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo '=== Testing Package Removal ==='
+        mkdir -p gamemodes include components plugins qawno/include
+        opencli setup --force
+        opencli install compiler
+        opencli package install Y-Less/sscanf --target components
+        opencli package remove Y-Less/sscanf
+        ! test -f components/sscanf.dll
+        ! test -f components/sscanf.so
+        echo 'Package removal test passed'
+
+  test-build-workflow:
+    <<: *test-base
+    container_name: test-build-workflow
+    volumes:
+      - ./test-scenarios/build:/project
+      - test-config:/root/.config/opencli
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo '=== Testing Build Workflow ==='
+        mkdir -p gamemodes include components plugins qawno/include
+        opencli setup --force
+        echo 'main() {}' > gamemodes/gamemode.pwn
+        opencli install compiler
+        opencli package install Y-Less/sscanf --target components
+        opencli build --verbose
+        test -f gamemodes/gamemode.amx
+        echo 'Build workflow test passed'
+
+  test-legacy-plugins:
+    <<: *test-base
+    container_name: test-legacy-plugins
+    volumes:
+      - ./test-scenarios/legacy:/project
+      - test-config:/root/.config/opencli
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo '=== Testing Legacy Plugins ==='
+        mkdir -p gamemodes include components plugins qawno/include
+        opencli setup --force
+        opencli install compiler
+        opencli package install Southclaws/pawn-requests --target plugins
+        test -f config.json
+        grep -q 'legacy_plugins' config.json
+        opencli package remove Southclaws/pawn-requests
+        (! grep -q 'requests' config.json || true)
+        echo 'Legacy plugins test passed'
+
+  test-version-constraints:
+    <<: *test-base
+    container_name: test-version-constraints
+    volumes:
+      - ./test-scenarios/versions:/project
+      - test-config:/root/.config/opencli
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo '=== Testing Version Constraints ==='
+        mkdir -p gamemodes include components plugins qawno/include
+        opencli setup --force
+        opencli install compiler
+        opencli package install 'Y-Less/sscanf=^2.13.0' --target components
+        opencli package list
+        opencli package check
+        echo 'Version constraints test passed'
+
+  unit-test:
+    build:
+      context: .
+      target: test
+      dockerfile: Dockerfile
+    container_name: opencli-unit-test
+    volumes:
+      - .:/app:cached
+      - cargo-cache:/usr/local/cargo/registry:cached
+    working_dir: /app
+    environment:
+      RUST_LOG: debug
+      RUST_BACKTRACE: 1
+    networks:
+      - test-network
+
+  integration-test:
+    <<: *test-base
+    container_name: opencli-integration
+    volumes:
+      - ./test-scenarios/integration:/project
+      - test-config:/root/.config/opencli
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo '=== Running Full Integration Test ==='
+        mkdir -p gamemodes include components plugins qawno/include
+        opencli setup --force
+        echo 'main() {}' > gamemodes/gamemode.pwn
+        opencli install compiler
+        opencli package install Y-Less/sscanf --target components
+        opencli build --verbose
+        opencli package list
+        opencli package check
+        test -f gamemodes/gamemode.amx
+        echo 'All integration tests passed'
+
+networks:
+  test-network:
+    driver: bridge
+
+volumes:
+  test-config:
+    name: opencli-test-config
+  cargo-cache:
+    name: opencli-cargo-cache

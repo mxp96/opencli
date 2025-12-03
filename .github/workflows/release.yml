@@ -1,0 +1,301 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g., v1.0.0)"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark as pre-release"
+        required: true
+        default: false
+        type: boolean
+      draft:
+        description: "Create as draft"
+        required: true
+        default: false
+        type: boolean
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate version format
+        run: |
+          if [[ ! "${{ inputs.version }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$ ]]; then
+            echo "Error: Version must follow semver format (e.g., v1.0.0 or v1.0.0-beta)"
+            exit 1
+          fi
+
+      - name: Check if tag exists
+        run: |
+          if git rev-parse "${{ inputs.version }}" >/dev/null 2>&1; then
+            echo "Error: Tag ${{ inputs.version }} already exists"
+            exit 1
+          fi
+
+      - name: Update version in Cargo.toml
+        run: |
+          VERSION="${{ inputs.version }}"
+          VERSION_NUMBER="${VERSION#v}"
+          sed -i "s/^version = \".*\"/version = \"$VERSION_NUMBER\"/" Cargo.toml
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Cargo.toml
+          git commit -m "chore: bump version to ${{ inputs.version }}"
+          git tag "${{ inputs.version }}"
+
+      - name: Push changes
+        run: |
+          git push origin HEAD:${{ github.ref_name }}
+          git push origin "${{ inputs.version }}"
+
+  build-artifacts:
+    name: Build Release Artifacts
+    needs: validate
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: opencli-linux-x86_64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            artifact: opencli-linux-x86_64-musl
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: opencli-windows-x86_64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: opencli-macos-x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: opencli-macos-arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version }}
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install musl-tools (Linux musl)
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Strip binary (Unix)
+        if: runner.os != 'Windows'
+        run: strip target/${{ matrix.target }}/release/opencli
+
+      - name: Create archive (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar -czf ${{ matrix.artifact }}.tar.gz opencli
+          shasum -a 256 ${{ matrix.artifact }}.tar.gz > ${{ matrix.artifact }}.tar.gz.sha256
+
+      - name: Create archive (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cd target/${{ matrix.target }}/release
+          Compress-Archive -Path opencli.exe -DestinationPath ${{ matrix.artifact }}.zip
+          (Get-FileHash ${{ matrix.artifact }}.zip -Algorithm SHA256).Hash | Out-File ${{ matrix.artifact }}.zip.sha256
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            target/${{ matrix.target }}/release/${{ matrix.artifact }}.*
+          retention-days: 7
+
+  create-release:
+    name: Create GitHub Release
+    needs: build-artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version }}
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${{ inputs.version }}^" 2>/dev/null || echo "")
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "First release - generating full changelog"
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --reverse)
+          else
+            echo "Generating changelog from $PREVIOUS_TAG to ${{ inputs.version }}"
+            CHANGELOG=$(git log $PREVIOUS_TAG..${{ inputs.version }} --pretty=format:"- %s (%h)" --reverse)
+          fi
+          
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create release body
+        run: |
+          cat > release_body.md << 'EOF'
+          ## 🚀 OpenCLI ${{ inputs.version }}
+          
+          ### 📦 Downloads
+          
+          Choose the binary for your platform:
+          
+          | Platform | Download | SHA-256 |
+          |----------|----------|---------|
+          | Linux x86_64 (glibc) | [opencli-linux-x86_64.tar.gz](opencli-linux-x86_64.tar.gz) | [SHA256](opencli-linux-x86_64.tar.gz.sha256) |
+          | Linux x86_64 (musl) | [opencli-linux-x86_64-musl.tar.gz](opencli-linux-x86_64-musl.tar.gz) | [SHA256](opencli-linux-x86_64-musl.tar.gz.sha256) |
+          | Windows x86_64 | [opencli-windows-x86_64.zip](opencli-windows-x86_64.zip) | [SHA256](opencli-windows-x86_64.zip.sha256) |
+          | macOS x86_64 (Intel) | [opencli-macos-x86_64.tar.gz](opencli-macos-x86_64.tar.gz) | [SHA256](opencli-macos-x86_64.tar.gz.sha256) |
+          | macOS ARM64 (Apple Silicon) | [opencli-macos-arm64.tar.gz](opencli-macos-arm64.tar.gz) | [SHA256](opencli-macos-arm64.tar.gz.sha256) |
+          
+          ### 📝 Changelog
+          
+          ${{ steps.changelog.outputs.changelog }}
+          
+          ### 🐳 Docker
+          
+          ```bash
+          docker pull ghcr.io/${{ github.repository }}:${{ inputs.version }}
+          ```
+          
+          ### 📋 Installation
+          
+          **Linux/macOS:**
+          ```bash
+          tar -xzf opencli-*.tar.gz
+          sudo mv opencli /usr/local/bin/
+          opencli --version
+          ```
+          
+          **Windows:**
+          ```powershell
+          # Extract ZIP and add to PATH
+          opencli.exe --version
+          ```
+          
+          ### ✅ Verification
+          
+          Verify the integrity of your download:
+          ```bash
+          sha256sum -c opencli-*.sha256
+          ```
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ inputs.version }}
+          name: OpenCLI ${{ inputs.version }}
+          body_path: release_body.md
+          draft: ${{ inputs.draft }}
+          prerelease: ${{ inputs.prerelease }}
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/**/*.zip
+            artifacts/**/*.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-docker:
+    name: Publish Docker Image
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version }}
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version number
+        id: version
+        run: |
+          VERSION="${{ inputs.version }}"
+          VERSION_NUMBER="${VERSION#v}"
+          echo "version=$VERSION_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Build and push release image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: runtime
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ inputs.version }}
+            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}
+            ghcr.io/${{ github.repository }}:latest
+          labels: |
+            org.opencontainers.image.title=OpenCLI
+            org.opencontainers.image.version=${{ inputs.version }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  summary:
+    name: Release Summary
+    needs: [validate, build-artifacts, create-release, publish-docker]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Generate summary
+        run: |
+          echo "### 🎉 Release ${{ inputs.version }} Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Configuration:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Version: ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Pre-release: ${{ inputs.prerelease }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Draft: ${{ inputs.draft }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Validation: ${{ needs.validate.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Build Artifacts: ${{ needs.build-artifacts.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub Release: ${{ needs.create-release.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker Publish: ${{ needs.publish-docker.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View Release](https://github.com/${{ github.repository }}/releases/tag/${{ inputs.version }})" >> $GITHUB_STEP_SUMMARY
+

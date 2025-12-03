@@ -1,0 +1,248 @@
+name: Build & Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_target:
+        description: "Build target platform"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - linux
+          - windows
+          - macos
+      optimization_level:
+        description: "Optimization level"
+        required: true
+        default: "release"
+        type: choice
+        options:
+          - release
+          - min-size
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  build-linux:
+    name: Build Linux (x86_64)
+    runs-on: ubuntu-latest
+    if: inputs.build_target == 'all' || inputs.build_target == 'linux'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build binary (Release)
+        if: inputs.optimization_level == 'release'
+        run: cargo build --release --target x86_64-unknown-linux-gnu
+
+      - name: Build binary (Min Size)
+        if: inputs.optimization_level == 'min-size'
+        run: cargo build --profile min-size --target x86_64-unknown-linux-gnu
+
+      - name: Strip binary
+        run: |
+          strip target/x86_64-unknown-linux-gnu/${{ inputs.optimization_level == 'min-size' && 'min-size' || 'release' }}/opencli
+
+      - name: Create archive
+        run: |
+          cd target/x86_64-unknown-linux-gnu/${{ inputs.optimization_level == 'min-size' && 'min-size' || 'release' }}
+          tar -czf opencli-linux-x86_64.tar.gz opencli
+          sha256sum opencli-linux-x86_64.tar.gz > opencli-linux-x86_64.tar.gz.sha256
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opencli-linux-x86_64
+          path: |
+            target/x86_64-unknown-linux-gnu/${{ inputs.optimization_level == 'min-size' && 'min-size' || 'release' }}/opencli-linux-x86_64.tar.gz
+            target/x86_64-unknown-linux-gnu/${{ inputs.optimization_level == 'min-size' && 'min-size' || 'release' }}/opencli-linux-x86_64.tar.gz.sha256
+          retention-days: 30
+
+  build-windows:
+    name: Build Windows (x86_64)
+    runs-on: windows-latest
+    if: inputs.build_target == 'all' || inputs.build_target == 'windows'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build binary (Release)
+        if: inputs.optimization_level == 'release'
+        run: cargo build --release --target x86_64-pc-windows-msvc
+
+      - name: Build binary (Min Size)
+        if: inputs.optimization_level == 'min-size'
+        run: cargo build --profile min-size --target x86_64-pc-windows-msvc
+
+      - name: Create archive
+        shell: pwsh
+        run: |
+          $profile = if ("${{ inputs.optimization_level }}" -eq "min-size") { "min-size" } else { "release" }
+          cd target/x86_64-pc-windows-msvc/$profile
+          Compress-Archive -Path opencli.exe -DestinationPath opencli-windows-x86_64.zip
+          (Get-FileHash opencli-windows-x86_64.zip -Algorithm SHA256).Hash | Out-File opencli-windows-x86_64.zip.sha256
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opencli-windows-x86_64
+          path: |
+            target/x86_64-pc-windows-msvc/${{ inputs.optimization_level == 'min-size' && 'min-size' || 'release' }}/opencli-windows-x86_64.zip
+            target/x86_64-pc-windows-msvc/${{ inputs.optimization_level == 'min-size' && 'min-size' || 'release' }}/opencli-windows-x86_64.zip.sha256
+          retention-days: 30
+
+  build-macos:
+    name: Build macOS (Universal)
+    runs-on: macos-latest
+    if: inputs.build_target == 'all' || inputs.build_target == 'macos'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin,aarch64-apple-darwin
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build x86_64 binary
+        if: inputs.optimization_level == 'release'
+        run: cargo build --release --target x86_64-apple-darwin
+
+      - name: Build ARM64 binary
+        if: inputs.optimization_level == 'release'
+        run: cargo build --release --target aarch64-apple-darwin
+
+      - name: Build x86_64 binary (Min Size)
+        if: inputs.optimization_level == 'min-size'
+        run: cargo build --profile min-size --target x86_64-apple-darwin
+
+      - name: Build ARM64 binary (Min Size)
+        if: inputs.optimization_level == 'min-size'
+        run: cargo build --profile min-size --target aarch64-apple-darwin
+
+      - name: Create universal binary
+        run: |
+          profile="${{ inputs.optimization_level == 'min-size' && 'min-size' || 'release' }}"
+          lipo -create \
+            target/x86_64-apple-darwin/$profile/opencli \
+            target/aarch64-apple-darwin/$profile/opencli \
+            -output opencli-universal
+          strip opencli-universal
+
+      - name: Create archive
+        run: |
+          tar -czf opencli-macos-universal.tar.gz opencli-universal
+          shasum -a 256 opencli-macos-universal.tar.gz > opencli-macos-universal.tar.gz.sha256
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opencli-macos-universal
+          path: |
+            opencli-macos-universal.tar.gz
+            opencli-macos-universal.tar.gz.sha256
+          retention-days: 30
+
+  docker-build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix={{branch}}-
+            type=ref,event=branch
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: runtime
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-windows, build-macos, docker-build]
+    if: always()
+    steps:
+      - name: Generate summary
+        run: |
+          echo "### Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Configuration:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Target: ${{ inputs.build_target }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Optimization: ${{ inputs.optimization_level }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Results:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Linux: ${{ needs.build-linux.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Windows: ${{ needs.build-windows.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- macOS: ${{ needs.build-macos.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker: ${{ needs.docker-build.result }}" >> $GITHUB_STEP_SUMMARY
+

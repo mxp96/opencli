@@ -1,0 +1,85 @@
+language: en
+early_access: false
+enable_free_tier: true
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    ignore_title_keywords:
+      - WIP
+      - DO NOT REVIEW
+      - DRAFT
+      - NO REVIEW
+    
+  path_filters:
+    - "!**/*.md"
+    - "!**/*.lock"
+    - "!*.toml"
+    - "!.github/workflows/**"
+    - "!Dockerfile"
+    - "!docker-compose*.yml"
+    - "!Makefile"
+    - "!scripts/**"
+    
+  path_instructions:
+    - path: "src/**/*.rs"
+      instructions: |
+        Review Rust code with focus on:
+        - Idiomatic Rust patterns and best practices
+        - Memory safety and ownership correctness
+        - Error handling using Result types
+        - Async/await usage and tokio runtime patterns
+        - Performance considerations and algorithmic complexity
+        - Security vulnerabilities
+        
+    - path: "src/security.rs"
+      instructions: |
+        Critical security review:
+        - Cryptographic operations correctness
+        - Proper random number generation (OsRng usage)
+        - Timing attack vulnerabilities
+        - Hash algorithm usage (Argon2, SHA-256)
+        - Salt generation and storage
+        
+    - path: "src/package/**/*.rs"
+      instructions: |
+        Package management review:
+        - Version constraint parsing and resolution logic
+        - Dependency resolution algorithms
+        - Package integrity verification
+        - Lock file handling
+        - Download and extraction safety
+        
+    - path: "src/compiler/**/*.rs"
+      instructions: |
+        Compiler management review:
+        - Platform detection accuracy
+        - Binary download and verification
+        - File permission handling (Unix)
+        - Extraction logic for different archive formats
+        
+    - path: "src/cache.rs"
+      instructions: |
+        Cache system review:
+        - File format integrity
+        - Concurrent access safety
+        - Memory efficiency for large caches
+        - Proper error handling for corrupted cache
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  learnings:
+    scope: auto
+  issues:
+    scope: auto

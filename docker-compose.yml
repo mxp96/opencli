@@ -1,0 +1,116 @@
+services:
+  dev:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: opencli-dev
+    volumes:
+      - .:/workspace:cached
+      - cargo-cache:/usr/local/cargo/registry:cached
+      - target-cache:/workspace/target:cached
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    environment:
+      RUST_LOG: ${RUST_LOG:-debug}
+      RUST_BACKTRACE: ${RUST_BACKTRACE:-full}
+      CARGO_TARGET_DIR: /workspace/target
+    networks:
+      - opencli-network
+
+  build:
+    build:
+      context: .
+      target: builder
+      dockerfile: Dockerfile
+    container_name: opencli-build
+    volumes:
+      - .:/build:cached
+      - cargo-cache:/usr/local/cargo/registry:cached
+      - ./artifacts:/artifacts
+    working_dir: /build
+    command:
+      - sh
+      - -c
+      - |
+        cargo build --release &&
+        mkdir -p /artifacts &&
+        cp target/release/opencli /artifacts/ &&
+        strip /artifacts/opencli &&
+        sha256sum /artifacts/opencli > /artifacts/opencli.sha256
+    environment:
+      CARGO_TARGET_DIR: /build/target
+    networks:
+      - opencli-network
+
+  opencli:
+    build:
+      context: .
+      target: runtime
+      dockerfile: Dockerfile
+    container_name: opencli-runtime
+    volumes:
+      - ./workspace:/workspace:cached
+      - opencli-config:/home/opencli/.config/opencli
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    environment:
+      RUST_LOG: ${RUST_LOG:-info}
+    networks:
+      - opencli-network
+
+  watch:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: opencli-watch
+    volumes:
+      - .:/workspace:cached
+      - cargo-cache:/usr/local/cargo/registry:cached
+      - target-cache:/workspace/target:cached
+    working_dir: /workspace
+    command: 
+      - cargo
+      - watch
+      - -x
+      - check
+      - -x
+      - test
+      - -x
+      - clippy
+    environment:
+      RUST_LOG: debug
+      CARGO_TARGET_DIR: /workspace/target
+    networks:
+      - opencli-network
+
+  format:
+    build:
+      context: .
+      target: base
+      dockerfile: Dockerfile
+    container_name: opencli-format
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command:
+      - cargo
+      - fmt
+      - --all
+    networks:
+      - opencli-network
+
+networks:
+  opencli-network:
+    driver: bridge
+
+volumes:
+  cargo-cache:
+    name: opencli-cargo-cache
+  target-cache:
+    name: opencli-target-cache
+  opencli-config:
+    name: opencli-config
